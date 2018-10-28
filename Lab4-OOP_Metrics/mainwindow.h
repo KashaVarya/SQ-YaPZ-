@@ -31,7 +31,7 @@ private:
     int NORM();
     int RFC();
     int WMC();
-    float LCOM();
+    double LCOM();
     int NOC();
     int DIT();
 };

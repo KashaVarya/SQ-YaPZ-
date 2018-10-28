@@ -22,26 +22,26 @@ MainWindow::~MainWindow()
 double MainWindow::AvgNumLinFun() {
 
     // записуємо регулярне вираження та ділимо текст
-    auto rx = QRegExp("(void|int|string|float|double|byte)\\s+(\\w+::)?\\w+\\(.*\\)");
+    auto rx = QRegExp("(void|int|string|float|double|byte|bool)\\s+(\\w+::)?\\w+\\(.*\\)");
     rx.setMinimal(true);
     QStringList funs = code.split(rx,  QString::SkipEmptyParts);
     double lines = 0;
     QString fun;
 
     // розраховуємо загальну кількість рядків
-    for(int i = 0; i < funs.count(); i++) {
+    for(int i = 1; i < funs.count(); i++) {
         lines += funs[i].count("\n");
     }
 
     // розраховуємо середнє значення
-    return lines / funs.count();
+    return funs.count() == 1 ? 0 : lines / (funs.count() - 1);
 }
 
 // середня кількість рядків, що містять вихідний код для функцій (методів)
 double MainWindow::AvgNumLinCode() {
 
     // записуємо регулярне вираження та ділимо текст
-    auto rx = QRegExp("(void|int|string|float|double|byte)\\s+(\\w+::)?\\w+\\(.*\\)");
+    auto rx = QRegExp("(void|int|string|float|double|byte|bool)\\s+(\\w+::)?\\w+\\(.*\\)");
     rx.setMinimal(true);
     QStringList funs = code.split(rx,  QString::SkipEmptyParts);
     double lines = 0;
@@ -49,26 +49,26 @@ double MainWindow::AvgNumLinCode() {
     int empty_line, comment = 0;
 
     // видаляємо пусті рядки
-    for(int i = 0; i < funs.count(); i++) {
-        empty_line = funs[i].indexOf(QRegExp("\\n{2}"));
+    for(int i = 1; i < funs.count(); i++) {
+        empty_line = funs[i].indexOf(QRegExp("\\n\\s*\\n"));
         while(empty_line != -1) {
             funs[i] = funs[i].remove(empty_line, 1);
-            empty_line = funs[i].indexOf(QRegExp("\\n{2}"));
+            empty_line = funs[i].indexOf(QRegExp("\\n\\s*\\n"));
         }
     }
 
     // розраховуємо кількість рядків тільки з коментарями
-    for(int i = 0; i < funs.count(); i++) {
+    for(int i = 1; i < funs.count(); i++) {
         comment += funs[i].count(QRegExp("\n\\s*//"));
     }
 
     // розраховуємо загальну кількість рядків
-    for(int i = 0; i < funs.count(); i++) {
+    for(int i = 1; i < funs.count(); i++) {
         lines += funs[i].count("\n");
     }
 
     // розраховуємо середнє значення
-    return (lines - comment) / funs.count();
+    return funs.count() == 1 ? 0 : (lines - comment) / (funs.count() - 1);
 }
 
 // середня кількість рядків для модулів
@@ -153,7 +153,7 @@ int MainWindow::WMC() {
 }
 
 // недолік зв’язності методів (Lack of cohesion in Methods, LCOM)
-float MainWindow::LCOM() {
+double MainWindow::LCOM() {
     int P = 0, Q = 0;
     int m;
     QString coual = "";
@@ -164,16 +164,12 @@ float MainWindow::LCOM() {
         Q = 0;
         const QString& item = lst[i];
         QStringList list = item.split("){",  QString::SkipEmptyParts);
-        //QStringList::iterator t = list.begin();
-        // s=s+item.count(") ")-item.count(" ) ");
         s=0;
         for(int j = list.count()-1; j >= 0; --j){
             const QString& ite = list[j];
-            //  if ((ite.count("{")>=ite.count("}"))&&(ite.count("}")!=0)) s=s+1;
             QStringList lt = ite.split(QRegExp("(void|int|string|float|double|byte)[A-Za-z0-9]*"),  QString::SkipEmptyParts);
             lt.removeDuplicates();
             m = lt.count();
-            //  lt.removeAt(lt.count()-1);
             for(int g = lt.count()-1; g >= 1; --g){
                 const QString& ir = lt[g];
                 QStringList l = ir.split(" ");
@@ -216,53 +212,33 @@ float MainWindow::LCOM() {
 
 // кількість нащадків (Number of children, NOC)
 int MainWindow::NOC(){
-    QStringList lst = code.split(QRegExp("class\\s"),  QString::SkipEmptyParts);
-    QStringList lis, Lclss, Rclss;
-    for (int g = 0; g<lst.count(); g++) {
-        const QString& item = lst[g].trimmed();
-        QString St ="";
-        for(int i=0; i<item.count(); i++)
-            if (item[i]!='\n')
-                St=St+QString(item[i]);
-            else
-                break;
-        lis<<St;
+
+    // делим по классам
+    QStringList class_list = code.split(QRegExp("class\\s"),  QString::SkipEmptyParts),
+                class_decl;
+    int count = 0;
+
+    // заносим в список объявления классов (1-ую строку)
+    for (int el = 0; el < class_list.count(); el++) {
+        QString item = class_list[el].trimmed();
+        int index = item.indexOf("\n") != -1 ? item.indexOf("\n") : item.count();
+        QString res = item.remove(index, item.count() - index + 1);
+        class_decl << res;
     }
-    for (int g = 0; g<lis.count(); g++) {
-        const QString& item = lis[g].trimmed();
-        QString St ="";
-        for(int i=0; i<item.count(); i++)
-            if (item[i]!=' ')
-                St=St+QString(item[i]);
-            else break;
-        Rclss<<St;
-    }
-    for (int g = 0; g<lis.count(); g++) {
-        const QString& item = lis[g].trimmed();
-        QString St ="";
-        lst = item.split(QRegExp("public|protected|private "),  QString::SkipEmptyParts);
-        for(int i=0; i<lst.count(); i++) {
-            St = St+lst[i];
+
+    // смотрим, является ли класс наследником
+    for (int el = 0; el < class_decl.count(); el++) {
+        QStringList children = class_decl[el].split(QRegExp("public|protected|private "),  QString::SkipEmptyParts);
+        if(children.count() > 1) {
+            count ++;
         }
-        Lclss<<St;
     }
-    for (int g = 0; g<Rclss.count(); g++) {
-        Lclss[g].replace(0,Rclss[g].count(),"");
-        Lclss[g] = Lclss[g].trimmed();
-    }
-    for (int g = 0; g<Rclss.count(); g++) {
-        Rclss[g].remove(":");
-        int s = 0;
-        for (int i = 0; i<Rclss.count(); i++)
-        {s=s+Lclss[i].count(Rclss[g]);}
-        return s;
-    }
-    return 0;
+    return count;
 }
 
 // глибина дерева спадкування (Depth of Inheritance tree, DIT)
 int MainWindow::DIT() {
-    QStringList lst = code.split(QRegExp("class\s"),  QString::SkipEmptyParts);
+    QStringList lst = code.split(QRegExp("class\\s"),  QString::SkipEmptyParts);
     QStringList lis, Lclss, Rclss;
     for (int g = 0; g<lst.count(); g++) {
         const QString& item = lst[g].trimmed();
@@ -364,7 +340,7 @@ void MainWindow::on_load_clicked() {
 }
 
 void MainWindow::on_result_clicked() {
-    code = ui->plainTextEdit->toPlainText() + "\n";
+    code = "\n" + ui->plainTextEdit->toPlainText() + "\n";
     ui->anlf->setText(QString::number(AvgNumLinFun()));
     ui->anlc->setText(QString::number(AvgNumLinCode()));
     ui->module->setText(QString::number(AvgNumLinMod()));
