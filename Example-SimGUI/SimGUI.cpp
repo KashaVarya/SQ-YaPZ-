@@ -1,8 +1,23 @@
-#include <QCoreApplication>
+#include <QtGui>
+#include <QtTest/QtTest>
+#include <QLineEdit>
 
-int main(int argc, char *argv[])
+class TestGui: public QObject
 {
-    QCoreApplication a(argc, argv);
+    Q_OBJECT
 
-    return a.exec();
+private slots:
+    void testGui();
+};
+
+void TestGui::testGui()
+{
+    QLineEdit lineEdit;
+
+    QTest::keyClicks(&lineEdit, "hello world");
+
+    QCOMPARE(lineEdit.text(), QString("hello world"));
 }
+
+QTEST_MAIN(TestGui)
+#include "SimGUI.moc"

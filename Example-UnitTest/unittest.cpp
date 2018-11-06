@@ -1,8 +1,17 @@
-#include <QCoreApplication>
+#include <QtTest/QtTest>
 
-int main(int argc, char *argv[])
+class TestQString: public QObject
 {
-    QCoreApplication a(argc, argv);
+    Q_OBJECT
+private slots:
+    void toUpper();
+};
 
-    return a.exec();
+void TestQString::toUpper()
+{
+    QString str = "Hello";
+    QCOMPARE(str.toUpper(), QString("HELLO"));
 }
+
+QTEST_MAIN(TestQString)
+#include "unittest.moc"

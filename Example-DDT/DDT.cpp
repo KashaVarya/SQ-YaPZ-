@@ -1,8 +1,30 @@
-#include <QCoreApplication>
+#include <QtTest/QtTest>
 
-int main(int argc, char *argv[])
+class TestQString: public QObject
 {
-    QCoreApplication a(argc, argv);
+    Q_OBJECT
+private slots:
+    void toUpper_data();
+    void toUpper();
+};
 
-    return a.exec();
+void TestQString::toUpper_data()
+{
+    QTest::addColumn<QString>("string");
+    QTest::addColumn<QString>("result");
+
+    QTest::newRow("all lower") << "hello" << "HELLO";
+    QTest::newRow("mixed")     << "Hello" << "HELLO";
+    QTest::newRow("all upper") << "HELLO" << "HELLO";
 }
+
+void TestQString::toUpper()
+{
+    QFETCH(QString, string);
+    QFETCH(QString, result);
+
+    QCOMPARE(string.toUpper(), result);
+}
+
+QTEST_MAIN(TestQString)
+#include "DDT.moc"
