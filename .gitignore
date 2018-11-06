@@ -33,5 +33,5 @@
 
 
 *.pro.user
-/build-*
+*/build-*
 
