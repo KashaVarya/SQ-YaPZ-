@@ -1,10 +1,10 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2018-11-07T10:27:44
+# Project created by QtCreator 2018-11-07T10:50:23
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui testlib
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -25,21 +25,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
-        main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+    unittests.cpp
 
 HEADERS += \
         mainwindow.h
 
 FORMS += \
-        mainwindow.ui \
-    addlangform.ui \
-    editstudentsform.ui \
-    exitform.ui \
-    findform.ui \
-    mainwindow.ui \
-    MainWindow.ui \
-    referform.ui
+        mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
